@@ -90,11 +90,10 @@ for continuous in [True, False]:
 
             env_configs[name] = config
 
-
 for name, kwargs in env_configs.items():
     register(
         id=name,
-        entry_point='envs:GridWorldEnv',
+        entry_point='gridworlds.envs:GridWorldEnv',
         kwargs=kwargs,
         tags={'wrapper_config.TimeLimit.max_episode_steps': 1000},
         nondeterministic=False,

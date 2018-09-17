@@ -5,11 +5,16 @@ from gridworlds import map_utils
 # import scipy
 import gym
 import math
-from gym.envs.classic_control import rendering
+import os
 from collections import OrderedDict
 
 # Convert a string colour to rgb arguments with: *to_rgb(my_str)
 from matplotlib.colors import to_rgb
+
+if "DISPLAY" in os.environ:
+    from gym.envs.classic_control import rendering
+else:
+    print("No Display detected, skipping rendering imports")
 
 
 def rotate_vector(vec, rot_axis, theta):
@@ -49,6 +54,8 @@ class GridWorldEnv(gym.Env):
     gc_activations = None
     bc_activations = None
     pc_activations = None
+
+    _seed = 0  # for gym compatibility  # TODO: actually use this
 
     metadata = {
         'render.modes': ['human', 'rgb_array'],

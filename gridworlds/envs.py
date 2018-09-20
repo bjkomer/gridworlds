@@ -610,7 +610,8 @@ class GridWorldEnv(gym.Env):
         else:
             return False
 
-    def _step(self, action):
+    #def _step(self, action):
+    def step(self, action):
 
         old_state = self.state.copy()
 
@@ -677,7 +678,8 @@ class GridWorldEnv(gym.Env):
             else:
                 return
 
-    def _reset(self):
+    #def _reset(self):
+    def reset(self):
 
         # TODO: add the possibility to change the map on reset (choose from a list of given maps, or generate one)
 
@@ -1148,6 +1150,11 @@ class GridWorldEnv(gym.Env):
         self.goal_array = np.zeros_like(self.map_array)
         self.goal_array[int(self.goal_state[0]), int(self.goal_state[1])] = 1
 
+    def seed(self, seed):
+        # TODO: actually use this
+        self._seed = seed
+
+    '''
     def reset(self):
         """
         For compatibility with both gym versions
@@ -1159,6 +1166,7 @@ class GridWorldEnv(gym.Env):
         For compatibility with both gym versions
         """
         return self._step(action)
+    '''
 
     def render(self, mode='human', close=False):
         """

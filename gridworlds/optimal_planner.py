@@ -230,6 +230,16 @@ class OptimalPlanner(object):
             return self.actions[-1]
         return self.actions[self.t - 1]
 
+    def act(self, obs, env):
+
+        # observations are not needed here with full environment state.
+        # they are just included as an argument so the function signature
+        # is consistent with other expert policies, which may use observations
+
+        self.form_plan(env)
+
+        return self.next_action()
+
     def __getitem__(self, index):
 
         return self.actions[index]

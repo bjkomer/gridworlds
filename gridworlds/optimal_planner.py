@@ -8,9 +8,12 @@ class OptimalPlanner(object):
     TODO: should this just be an optional function of the GridWorldEnv?
     """
 
-    def __init__(self):
+    def __init__(self, continuous=True, directional=True):
         self.actions = None
         self.t = 0
+
+        self.continuous = continuous
+        self.directional = directional
 
     def form_plan(self, env):
         """
@@ -134,14 +137,17 @@ class OptimalPlanner(object):
                 planning_grid[x, y] = value
                 new_nodes.append((x, y))
 
-        # handle diagonals differently, only allow passage if both edges are also free
-        for c in diag_checks:
-            x, y, value = c
-            if planning_grid[x, y] != wall_value and (planning_grid[x, y] == 0 or planning_grid[x, y] > value):
-                # extra check for diagonals
-                if planning_grid[x, node[1]] != wall_value and planning_grid[node[0], y] != wall_value:
-                    planning_grid[x, y] = value
-                    new_nodes.append((x, y))
+
+        # Only attempt to move along diagonals if using continuous control
+        if self.continuous:
+            # handle diagonals differently, only allow passage if both edges are also free
+            for c in diag_checks:
+                x, y, value = c
+                if planning_grid[x, y] != wall_value and (planning_grid[x, y] == 0 or planning_grid[x, y] > value):
+                    # extra check for diagonals
+                    if planning_grid[x, node[1]] != wall_value and planning_grid[node[0], y] != wall_value:
+                        planning_grid[x, y] = value
+                        new_nodes.append((x, y))
 
         return new_nodes
 
@@ -190,34 +196,122 @@ class OptimalPlanner(object):
         Perform one step of the controller, and return the new state and the action that got there
         """
         # TODO: assuming continuous directional control, will need to implement the other methods still
+        if self.continuous and self.directional:
+            th = state[2]
+            dx = target[0] - state[0]
+            dy = target[1] - state[1]
+            desired_th = np.arctan2(dy, dx)
+            dth = desired_th - th
+            if dth > np.pi:
+                dth -= 2*np.pi
+            if dth < -np.pi:
+                dth += 2*np.pi
+            dlin = np.sqrt(dx**2+dy**2)
 
-        th = state[2]
-        dx = target[0] - state[0]
-        dy = target[1] - state[1]
-        desired_th = np.arctan2(dy, dx)
-        dth = desired_th - th
-        if dth > np.pi:
-            dth -= 2*np.pi
-        if dth < -np.pi:
-            dth += 2*np.pi
-        dlin = np.sqrt(dx**2+dy**2)
+            # linear actions
+            if abs(dth) < np.pi/2:
+                lin_ac = np.clip(dlin, 0, env.max_lin_vel)
+            else:
+                lin_ac = 0
 
-        if abs(dth) < np.pi/2:
-            lin_ac = np.clip(dlin, 0, env.max_lin_vel)
-        else:
-            lin_ac = 0
-        ang_ac = np.clip(dth, -env.max_ang_vel, env.max_ang_vel)
+            # angular action
+            ang_ac = np.clip(dth, -env.max_ang_vel, env.max_ang_vel)
 
-        state[2] += ang_ac * env.dt
-        if state[2] > np.pi:
-            state[2] -= 2 * np.pi
-        elif state[2] < -np.pi:
-            state[2] += 2 * np.pi
-        displacement = np.array([np.cos(state[2]), np.sin(state[2])]) * lin_ac * env.dt
+            state[2] += ang_ac * env.dt
+            if state[2] > np.pi:
+                state[2] -= 2 * np.pi
+            elif state[2] < -np.pi:
+                state[2] += 2 * np.pi
+            displacement = np.array([np.cos(state[2]), np.sin(state[2])]) * lin_ac * env.dt
 
-        state[[0, 1]] += displacement
+            state[[0, 1]] += displacement
 
-        return state, np.array([lin_ac, ang_ac])
+            return state, np.array([lin_ac, ang_ac])
+
+        if self.continuous and not self.directional:
+            dx = target[0] - state[0]
+            dy = target[1] - state[1]
+
+            x_ac = np.clip(dx, -env.max_lin_vel, env.max_lin_vel)
+            y_ac = np.clip(dy, -env.max_lin_vel, env.max_lin_vel)
+            
+            displacement = np.array([x_ac, y_ac]) * env.dt
+            state[[0, 1]] += displacement
+            
+            return state, np.array([x_ac, y_ac])
+
+        if not self.continuous and self.directional:
+            
+            dx = target[0] - state[0]
+            dy = target[1] - state[1]
+            th = state[2]
+            
+            if dx == 1:
+                if th == env.RIGHT:
+                    ac = env.FORWARD
+                elif th == env.UP:
+                    ac = env.RIGHT
+                elif th == env.DOWN:
+                    ac = env.LEFT
+                else:
+                    # Turning either direction is fine
+                    ac = env.RIGHT
+            elif dx == -1:
+                if th == env.LEFT:
+                    ac = env.FORWARD
+                elif th == env.UP:
+                    ac = env.LEFT
+                elif th == env.DOWN:
+                    ac = env.RIGHT
+                else:
+                    # Turning either direction is fine
+                    ac = env.RIGHT
+            elif dy == 1:
+                if th == env.UP:
+                    ac = env.FORWARD
+                elif th == env.LEFT:
+                    ac = env.RIGHT
+                elif th == env.RIGHT:
+                    ac = env.LEFT
+                else:
+                    # Turning either direction is fine
+                    ac = env.RIGHT
+            elif dy == -1:
+                if th == env.DOWN:
+                    ac = env.FORWARD
+                elif th == env.LEFT:
+                    ac = env.LEFT
+                elif th == env.RIGHT:
+                    ac = env.RIGHT
+                else:
+                    # Turning either direction is fine
+                    ac = env.RIGHT
+            else:
+                # This should never happen
+                assert False
+            
+            # action is either forward or rotate
+            return state, np.array([ac])
+
+        if not self.continuous and not self.directional:
+            dx = target[0] - state[0]
+            dy = target[1] - state[1]
+
+            if dx == 1:
+                move_ac = env.RIGHT
+            elif dx == -1:
+                move_ac = env.LEFT
+            elif dy == 1:
+                move_ac = env.UP
+            elif dy == -1:
+                move_ac = env.DOWN
+            else:
+                # This should never happen
+                assert False
+
+            state[[0, 1]] += env.holonomic_transitions(move_ac)
+
+            return state, move_ac
 
     def next_action(self):
         self.t += 1

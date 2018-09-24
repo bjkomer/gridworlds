@@ -237,7 +237,7 @@ class OptimalPlanner(object):
             
             displacement = np.array([x_ac, y_ac]) * env.dt
             state[[0, 1]] += displacement
-            
+
             return state, np.array([x_ac, y_ac])
 
         if not self.continuous and self.directional:
@@ -289,9 +289,17 @@ class OptimalPlanner(object):
             else:
                 # This should never happen
                 assert False
+
+            if ac == env.FORWARD:
+                # move forward in the direction currently facing
+                displacement = env.holonomic_transitions[state[2]]
+                state[[0, 1]] += displacement
+            else:
+                # rotation
+                state[2] = env.directional_transitions[(ac, state[2])]
             
             # action is either forward or rotate
-            return state, np.array([ac])
+            return state, ac
 
         if not self.continuous and not self.directional:
             dx = target[0] - state[0]
@@ -309,7 +317,7 @@ class OptimalPlanner(object):
                 # This should never happen
                 assert False
 
-            state[[0, 1]] += env.holonomic_transitions(move_ac)
+            state[[0, 1]] += env.holonomic_transitions[move_ac]
 
             return state, move_ac
 

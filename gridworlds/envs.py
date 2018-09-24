@@ -237,13 +237,14 @@ class GridWorldEnv(gym.Env):
         # The width and height of each square tile
         self.tile_size = self.scale
 
-        # this flag can be set to false during training so no window shows up
-        self.renderable = renderable
-
-        if self.renderable:
-            self._create_rendering_viewer()
-        else:
-            self.viewer = None
+        ## this flag can be set to false during training so no window shows up
+        #self.renderable = renderable
+        #
+        #if self.renderable:
+        #    self._create_rendering_viewer()
+        #else:
+        #    self.viewer = None
+        self.viewer = None
 
     def _build_action_space(self):
 
@@ -668,7 +669,7 @@ class GridWorldEnv(gym.Env):
                     # rotation
                     self.state[2] = self.directional_transitions[(action, self.state[2])]
                     return
-            elif self.movement_type == 'holonomic:':
+            elif self.movement_type == 'holonomic':
                 displacement = self.holonomic_transitions[action]
 
             new_pos = (self.state[[0, 1]] + displacement).astype(int)
@@ -713,7 +714,8 @@ class GridWorldEnv(gym.Env):
 
         self.step_count = 0
 
-        if self.renderable:
+        #if self.renderable:
+        if self.viewer is not None:
             # Create new viewer with the updated goal location
             self.goal_trans.set_translation(
                 self._scale_x_pos(self.goal_state[0]),
@@ -866,9 +868,9 @@ class GridWorldEnv(gym.Env):
 
     def _render(self, mode='human', close=False):
 
-        # Do nothing if renderable is set to False
-        if not self.renderable:
-            return
+        ## Do nothing if renderable is set to False
+        #if not self.renderable:
+        #    return
 
         if close:
             if self.viewer is not None:
@@ -1089,9 +1091,9 @@ class GridWorldEnv(gym.Env):
         Render all extra viewers
         includes: head direction, boundary cell, place cell, grid cell
         """
-        # Do nothing if renderable is set to False
-        if not self.renderable:
-            return
+        ## Do nothing if renderable is set to False
+        #if not self.renderable:
+        #    return
 
         if self.hd_activations is not None:
             self._render_head_direction()

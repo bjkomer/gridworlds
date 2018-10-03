@@ -653,6 +653,10 @@ class GridWorldEnv(gym.Env):
                 elif self.state[2] < -np.pi:
                     self.state[2] += 2*np.pi
                 displacement = np.array([np.cos(self.state[2]), np.sin(self.state[2])])*lin_vel*self.dt
+            else:
+                raise NotImplementedError(
+                    'movement type of {0} not implemented for continuous control'.format(self.movement_type)
+                )
             new_pos = self.state[[0, 1]] + displacement
             if self.free_space(new_pos):
                 self.state[[0, 1]] = new_pos
@@ -671,6 +675,10 @@ class GridWorldEnv(gym.Env):
                     return
             elif self.movement_type == 'holonomic':
                 displacement = self.holonomic_transitions[action]
+            else:
+                raise NotImplementedError(
+                    'movement type of {0} not implemented for discrete control'.format(self.movement_type)
+                )
 
             new_pos = (self.state[[0, 1]] + displacement).astype(int)
             new_pos = np.clip(new_pos, [0, 0], [self.width - 1, self.height - 1])

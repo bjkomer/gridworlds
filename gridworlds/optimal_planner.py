@@ -8,12 +8,22 @@ class OptimalPlanner(object):
     TODO: should this just be an optional function of the GridWorldEnv?
     """
 
-    def __init__(self, continuous=True, directional=True):
+    def __init__(self, continuous=True, directional=True,
+                 discount=0.9,
+                 step_reward=-0.01,
+                 goal_reward=1.0,
+                ):
         self.actions = None
         self.t = 0
 
         self.continuous = continuous
         self.directional = directional
+
+        # These parameters are used for computing the value function
+        # They have no effect on the actual planning
+        self.discount = discount
+        self.step_reward = step_reward
+        self.goal_reward = goal_reward
 
     def form_plan(self, env):
         """
@@ -340,7 +350,23 @@ class OptimalPlanner(object):
 
         self.form_plan(env)
 
-        return self.next_action()
+        vpred = self.value_pred()
+
+        return self.next_action(), vpred
+
+    def value_pred(self):
+        """
+        Computes a value prediction from the optimal planner
+        using the current timestep and remaining path length
+        """
+
+        horizon = len(self.actions) - self.t
+
+        # Closed form calculation of the discounted value of the current state
+        value = self.step_reward * (1 - self.discount)**(horizon - 1) / (1 - self.discount)
+        value += self.goal_reward + self.discount**horizon
+
+        return value
 
     def __getitem__(self, index):
 

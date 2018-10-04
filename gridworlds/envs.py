@@ -62,22 +62,23 @@ class GridWorldEnv(gym.Env):
         'video.frames_per_second' : 50
     }
 
-    def __init__(
-            self,
-            map_array,
-            observations=OrderedDict(),
-            movement_type='directional',
-            max_lin_vel=1,
-            max_ang_vel=np.pi/4,
-            continuous=False,
-            max_steps=1000,
-            dt=.1,
-            fixed_start=False,
-            fixed_goal=False,
-            renderable=False,
-            debug_ghost=False,
-            classifier=None,
-
+    def __init__(self,
+                 map_array,
+                 observations=OrderedDict(),
+                 movement_type='directional',
+                 max_lin_vel=1,
+                 max_ang_vel=np.pi/4,
+                 continuous=False,
+                 max_steps=1000,
+                 dt=.1,
+                 wall_penalty=-1.,
+                 movement_cost=-.01,
+                 goal_reward=1.,
+                 fixed_start=False,
+                 fixed_goal=False,
+                 renderable=False,
+                 debug_ghost=False,
+                 classifier=None,
     ):
         """
         GridWorld environment compatible with Gym
@@ -89,6 +90,9 @@ class GridWorldEnv(gym.Env):
         :param continuous: if True, action and state are continuous, if False, they are discrete
         :param max_steps: maximum number of steps in an episode
         :param dt: time constant for continuous movement
+        :param wall_penalty: reward value for hitting a wall
+        :param movement_cost: reward value for moving into free space
+        :param goal_reward: reward value for reaching the goal
         :param fixed_start: if true, agent will start at the same location every episode
         :param fixed_goal: if true, the goal will be at the same location every episode
         :param debug_ghost: if true, render an agent where a classifier thinks it is based on current observations
@@ -157,6 +161,10 @@ class GridWorldEnv(gym.Env):
         self.max_lin_vel = max_lin_vel
         self.max_ang_vel = max_ang_vel
         self.dt = dt
+
+        self.wall_penalty = wall_penalty
+        self.movement_cost = movement_cost
+        self.goal_reward = goal_reward
 
         # Dictionary mapping from observation name to the indices of the observation vector where they are found
         # generated inside '_build_observation_space()'
@@ -592,15 +600,15 @@ class GridWorldEnv(gym.Env):
 
         if (new_state == old_state).all():
             # large penalty for hitting a wall and not moving
-            reward = -1
+            reward = self.wall_penalty  # -1
         else:
             # Small negative movement penalty
-            reward = -0.01
+            reward = self.movement_cost  # -0.01
 
         done = self._goal_check()
 
         if done:
-            reward = 1
+            reward = self.goal_reward  # 1
 
         return reward, done
 

@@ -76,7 +76,6 @@ class GridWorldEnv(gym.Env):
                  goal_reward=1.,
                  fixed_start=False,
                  fixed_goal=False,
-                 renderable=False,
                  debug_ghost=False,
                  classifier=None,
     ):
@@ -245,13 +244,6 @@ class GridWorldEnv(gym.Env):
         # The width and height of each square tile
         self.tile_size = self.scale
 
-        ## this flag can be set to false during training so no window shows up
-        #self.renderable = renderable
-        #
-        #if self.renderable:
-        #    self._create_rendering_viewer()
-        #else:
-        #    self.viewer = None
         self.viewer = None
 
     def _build_action_space(self):
@@ -289,7 +281,6 @@ class GridWorldEnv(gym.Env):
 
         self.obs_low = list()
         self.obs_high = list()
-
 
         # full_map, pob_view, dist_sensors, heading, location, grid_cells, goal_loc, goal_vec
         for obs in self.observations:
@@ -695,8 +686,18 @@ class GridWorldEnv(gym.Env):
             else:
                 return
 
-    #def _reset(self):
-    def reset(self):
+    def reset(self, goal_distance=0):
+        """
+        Reset the environment, with an optional goal_distance parameter to force the chosen goal to be
+        within a certain distance of the start location. Useful when training a network in a curriculum learning manner.
+        If the goal_distance is set to 0, any distance can be used
+        """
+
+        # TODO: when using goal_distance, it should really be shortest path length rather than bird's eye distance
+        #       to the goal, because walls could be in the way and actually make it a lot longer. Hopefully these cases
+        #       are rare enough that a curriculum learning setting will still work fine
+        #       In continuous cases might want to take initial heading into account as well. The goal being
+        #       close but in the opposite direction may be harder than a slightly further goal in the same direction
 
         # TODO: add the possibility to change the map on reset (choose from a list of given maps, or generate one)
 
@@ -716,21 +717,26 @@ class GridWorldEnv(gym.Env):
         if not self.fixed_goal:
             # TODO: more complicated environments could have a more complex goal
             # Choose a random goal location
-            self.goal_state[[0, 1]] = self.random_free_space()
+            if goal_distance > 0:
+                self.goal_state[[0, 1]] = self.constrained_free_space(center=self.state[[0, 1]], distance=goal_distance)
+            else:
+                self.goal_state[[0, 1]] = self.random_free_space()
 
             # Pick a new goal if the goal is the same as the starting location
             # TODO: in continuous space, this equality check won't be enough
             while (self.state[[0, 1]] == self.goal_state[[0, 1]]).all():
-                self.goal_state[[0, 1]] = self.random_free_space()
+                if goal_distance > 0:
+                    self.goal_state[[0, 1]] = self.constrained_free_space(center=self.state[[0, 1]],
+                                                                          distance=goal_distance)
+                else:
+                    self.goal_state[[0, 1]] = self.random_free_space()
 
             # Populate the goal array, in case the observations use this representation
             self.goal_array = np.zeros_like(self.map_array)
             self.goal_array[int(self.goal_state[0]), int(self.goal_state[1])] = 1
 
-
         self.step_count = 0
 
-        #if self.renderable:
         if self.viewer is not None:
             # Create new viewer with the updated goal location
             self.goal_trans.set_translation(
@@ -816,6 +822,30 @@ class GridWorldEnv(gym.Env):
                 if self.map_array[x, y] == 0:
                     return np.array([x, y])
 
+    def constrained_free_space(self, center, distance, continuous=False):
+        """
+        Returns the coordinate of a random unoccupied space in the map
+        Constrained to be within a particular distance of a center point
+        If continuous is True, returns float coordinates rather than integer
+        """
+
+        min_x = max(center[0] - distance, 0)
+        max_x = min(center[0] + distance, self.width - 1)
+
+        min_y = max(center[1] - distance, 0)
+        max_y = min(center[1] + distance, self.height - 1)
+
+        if continuous:
+            while True:
+                x, y = np.random.uniform(low=min_x, high=max_x), np.random.uniform(low=min_y, high=max_y)
+                if self.free_space([x, y]):
+                    return np.array([x, y])
+        else:
+            while True:
+                x, y = np.random.randint(low=min_x, high=max_x), np.random.randint(low=min_y, high=max_y)
+                if self.map_array[x, y] == 0:
+                    return np.array([x, y])
+
     def _create_rendering_viewer(self):
         self.viewer = rendering.Viewer(self.screen_width, self.screen_height)
 
@@ -883,10 +913,6 @@ class GridWorldEnv(gym.Env):
                     self.viewer.add_geom(wall_poly)
 
     def _render(self, mode='human', close=False):
-
-        ## Do nothing if renderable is set to False
-        #if not self.renderable:
-        #    return
 
         if close:
             if self.viewer is not None:
@@ -1107,9 +1133,6 @@ class GridWorldEnv(gym.Env):
         Render all extra viewers
         includes: head direction, boundary cell, place cell, grid cell
         """
-        ## Do nothing if renderable is set to False
-        #if not self.renderable:
-        #    return
 
         if self.hd_activations is not None:
             self._render_head_direction()
@@ -1171,20 +1194,6 @@ class GridWorldEnv(gym.Env):
     def seed(self, seed):
         # TODO: actually use this
         self._seed = seed
-
-    '''
-    def reset(self):
-        """
-        For compatibility with both gym versions
-        """
-        return self._reset()
-
-    def step(self, action):
-        """
-        For compatibility with both gym versions
-        """
-        return self._step(action)
-    '''
 
     def render(self, mode='human', close=False):
         """

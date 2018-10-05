@@ -10,7 +10,10 @@ import argparse
 # from map_layout import map_layouts
 from gym_maze.envs.generators import SimpleMazeGenerator, RandomMazeGenerator, \
         RandomBlockMazeGenerator, TMazeGenerator, WaterMazeGenerator
-from state_prediction_utils import generate_classifier_function, RecurrentClassifier
+try:
+    from state_prediction_utils import generate_classifier_function, RecurrentClassifier
+except:
+    print("Could not import state_prediction_utils, 'view_ghost' will not work")
 
 import tensorflow as tf
 # check here if baselines doesn't install properly:
@@ -37,6 +40,7 @@ parser.add_argument('--clf-features', type=str, default='hd-bc-dists')
 parser.add_argument('--clf-normalize-output', action='store_true')
 parser.add_argument('--clf-predict-heading', action='store_true')
 parser.add_argument('--clf-history', type=int, default=1, help='length of observation history to use for prediction')
+parser.add_argument('--goal-distance', type=int, default=0, help='distance of the goal from the start location')
 
 args = parser.parse_args()
 params = vars(args)
@@ -125,7 +129,6 @@ env = GridWorldEnv(
     continuous=params['continuous'],
     max_steps=params['episode_length'],
     dt=params['dt'],
-    renderable=True,
     debug_ghost=debug_ghost,
     classifier=classifier,
 )
@@ -171,7 +174,7 @@ num_episodes = 10
 time_steps = 10000#100
 returns = np.zeros((num_episodes,))
 for e in range(num_episodes):
-    obs = env.reset()
+    obs = env.reset(goal_distance=params['goal_distance'])
     for s in range(params['episode_length']):
         env.render()
         env._render_extras()

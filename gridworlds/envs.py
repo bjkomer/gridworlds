@@ -7,6 +7,7 @@ import gym
 import math
 import os
 from collections import OrderedDict
+import constants
 
 # Convert a string colour to rgb arguments with: *to_rgb(my_str)
 from matplotlib.colors import to_rgb
@@ -37,11 +38,11 @@ def rotate_vector(vec, rot_axis, theta):
 class GridWorldEnv(gym.Env):
 
     # Action constants for discrete environment
-    FORWARD = 0
-    UP = 0
-    LEFT = 1
-    RIGHT = 2
-    DOWN = 3
+    FORWARD = constants.FORWARD
+    UP = constants.UP
+    LEFT = constants.LEFT
+    RIGHT = constants.RIGHT
+    DOWN = constants.DOWN
 
     # extra viewers for specific visualizations
     hd_viewer = None  # head direction

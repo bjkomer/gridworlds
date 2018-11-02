@@ -8,6 +8,10 @@ import math
 import os
 from collections import OrderedDict
 import constants
+try:
+    import csp_utils
+except ImportError:
+    print("Could not import csp_utils. Make sure Nengo is installed if using CSP observations.")
 
 # Convert a string colour to rgb arguments with: *to_rgb(my_str)
 from matplotlib.colors import to_rgb
@@ -139,6 +143,15 @@ class GridWorldEnv(gym.Env):
                 receptive_field_max: parameter for the largest receptive field away from the agent
                 TODO: could there be a gaussian std and a cutoff for the receptive fields?
                 NOTE: in the real brain these cells will be less organized and more randomly distributed, that should be an option in the future
+            goal_csp: continuous semantic pointer representing the goal location
+                dim: dimensionality of the semantic pointer
+                x_axis_vec: vector for the x_axis
+                y_axis_vec: vector for the y_axis
+                egocentric: if true, coordinate is relative to the agent
+            agent_csp: continuous semantic pointer representing the location of the agent
+                dim: dimensionality of the semantic pointer
+                x_axis_vec: vector for the x_axis
+                y_axis_vec: vector for the y_axis
         """
 
         assert movement_type in ['directional', 'holonomic']
@@ -381,11 +394,26 @@ class GridWorldEnv(gym.Env):
 
                 # Initialize array to store the activations
                 self.hd_activations = np.zeros((n_cells,))
+            elif obs == 'goal_csp':
+                dim = self.observations[obs]['dim']
+                self.obs_low += [-1] * dim
+                self.obs_high += [1] * dim
+                #
+                # # FIXME: these might not need to be saved, could just get from observations dict
+                # self.goal_x_axis_vec = self.observations[obs]['x_axis_vec']
+                # self.goal_y_axis_vec = self.observations[obs]['y_axis_vec']
+            elif obs == 'agent_csp':
+                dim = self.observations[obs]['dim']
+                self.obs_low += [-1] * dim
+                self.obs_high += [1] * dim
+                #
+                # # FIXME: these might not need to be saved, could just get from observations dict
+                # self.agent_x_axis_vec = self.observations[obs]['x_axis_vec']
+                # self.agent_y_axis_vec = self.observations[obs]['y_axis_vec']
             else:
                 raise NotImplementedError("Unrecognized observation type {0}".format(obs))
             index_end = len(self.obs_low)
             self.obs_index_dict[obs] = list(range(index_start, index_end))
-
 
         return gym.spaces.Box(
             low=np.array(self.obs_low),
@@ -557,6 +585,39 @@ class GridWorldEnv(gym.Env):
                     obs_dict[obs] = self.hd_activations.copy()
                 else:
                     obs_values += list(self.hd_activations.flatten())
+            elif obs == 'goal_csp':
+                # TODO: add option for normalization here in the future?
+                if self.observations[obs]['egocentric']:
+                    x = self.goal_state[0] - self.state[0]
+                    y = self.goal_state[1] - self.state[1]
+                else:
+                    x = self.goal_state[0]
+                    y = self.goal_state[1]
+                vec = csp_utils.encode_point(
+                    x=x,
+                    y=y,
+                    x_axis_vec=self.observations[obs]['x_axis_vec'],
+                    y_axis_vec=self.observations[obs]['y_axis_vec']
+                ).v
+                if return_dict:
+                    obs_dict[obs] = vec
+                else:
+                    obs_values += list(vec)
+
+            elif obs == 'agent_csp':
+                # TODO: add option for normalization here in the future?
+                x = self.state[0]
+                y = self.state[1]
+                vec = csp_utils.encode_point(
+                    x=x,
+                    y=y,
+                    x_axis_vec=self.observations[obs]['x_axis_vec'],
+                    y_axis_vec=self.observations[obs]['y_axis_vec']
+                ).v
+                if return_dict:
+                    obs_dict[obs] = vec
+                else:
+                    obs_values += list(vec)
 
         if return_dict:
             return obs_dict

@@ -1335,5 +1335,22 @@ def generate_obs_dict(params):
             'receptive_field_min': params['hd_receptive_field_min'],
             'receptive_field_max': params['hd_receptive_field_max'],
         }
+    if params['goal_csp']:
+        # TODO: make sure the unitary vectors created here are unique and controlled by the seed
+        # TODO: have an option to supply specific vectors in the future
+        obs['goal_csp'] = {
+            'egocentric': params['goal_csp_egocentic'],
+            'dim': params['goal_csp_dim'],
+            'x_axis_vec': csp_utils.unitary_vector(params['goal_csp_dim']),
+            'y_axis_vec': csp_utils.unitary_vector(params['goal_csp_dim']),
+        }
+    if params['agent_csp']:
+        # TODO: make sure the unitary vectors created here are unique and controlled by the seed
+        # TODO: have an option to supply specific vectors in the future
+        obs['agent_csp'] = {
+            'dim': params['agent_csp_dim'],
+            'x_axis_vec': csp_utils.unitary_vector(params['agent_csp_dim']),
+            'y_axis_vec': csp_utils.unitary_vector(params['agent_csp_dim']),
+        }
 
     return obs

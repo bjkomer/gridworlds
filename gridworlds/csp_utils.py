@@ -10,3 +10,9 @@ def power(s, e):
 def encode_point(x, y, x_axis_vec, y_axis_vec):
 
     return power(x_axis_vec, x) * power(y_axis_vec, y)
+
+
+def unitary_vector(dim):
+    vec = nengo.spa.SemanticPointer(dim)
+    vec.make_unitary()
+    return vec.v

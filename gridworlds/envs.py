@@ -7,9 +7,9 @@ import gym
 import math
 import os
 from collections import OrderedDict
-import constants
+from gridworlds import constants
 try:
-    import csp_utils
+    from gridworlds import csp_utils
 except ImportError:
     print("Could not import csp_utils. Make sure Nengo is installed if using CSP observations.")
 
@@ -1335,22 +1335,23 @@ def generate_obs_dict(params):
             'receptive_field_min': params['hd_receptive_field_min'],
             'receptive_field_max': params['hd_receptive_field_max'],
         }
-    if params['goal_csp']:
+    if params['csp_dim'] > 0:
         # TODO: make sure the unitary vectors created here are unique and controlled by the seed
         # TODO: have an option to supply specific vectors in the future
+        x_axis_vec = csp_utils.unitary_vector(params['csp_dim'])
+        y_axis_vec = csp_utils.unitary_vector(params['csp_dim'])
+    if params['goal_csp']:
         obs['goal_csp'] = {
-            'egocentric': params['goal_csp_egocentic'],
-            'dim': params['goal_csp_dim'],
-            'x_axis_vec': csp_utils.unitary_vector(params['goal_csp_dim']),
-            'y_axis_vec': csp_utils.unitary_vector(params['goal_csp_dim']),
+            'egocentric': params['goal_csp_egocentric'],
+            'dim': params['csp_dim'],
+            'x_axis_vec': x_axis_vec,
+            'y_axis_vec': y_axis_vec,
         }
     if params['agent_csp']:
-        # TODO: make sure the unitary vectors created here are unique and controlled by the seed
-        # TODO: have an option to supply specific vectors in the future
         obs['agent_csp'] = {
-            'dim': params['agent_csp_dim'],
-            'x_axis_vec': csp_utils.unitary_vector(params['agent_csp_dim']),
-            'y_axis_vec': csp_utils.unitary_vector(params['agent_csp_dim']),
+            'dim': params['csp_dim'],
+            'x_axis_vec': x_axis_vec,
+            'y_axis_vec': y_axis_vec,
         }
 
     return obs

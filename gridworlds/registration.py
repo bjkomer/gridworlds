@@ -8,6 +8,9 @@ env_configs = {}
 
 name_base = 'GW-{0}-{1}-{2}-v0'
 
+# Set random seed to ensure environment generation is always consistent
+np.random.seed(13)
+
 # NOTE: currently using a fixed map, need to have a version with variable maps in the future
 # Hardcoding here so the same map is used for the same environment specification, for reproducability
 map_array = np.array([
@@ -48,6 +51,10 @@ for continuous in [True, False]:
                 'hd_n_cells': 0,
                 'hd_receptive_field_min': 0,
                 'hd_receptive_field_max': 0,
+                'csp_dim': 0,
+                'goal_csp': False,
+                'agent_csp': False,
+                'goal_csp_egocentric': False,
             }
 
             if biosensors:
@@ -89,6 +96,58 @@ for continuous in [True, False]:
             }
 
             env_configs[name] = config
+
+simple_map_array = np.array([
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+])
+
+# Simple CSP environment
+
+params = {
+    'full_map_obs': False,
+    'pob': 0,
+    'max_sensor_dist': 0,
+    'n_sensors': 0,
+    'fov': 0,
+    'normalize_dist_sensors': False,
+    'n_grid_cells': 0,
+    'bc_n_ring': 0,
+    'bc_n_rad': 0,
+    'bc_dist_rad': 0,
+    'bc_receptive_field_min': 0,
+    'bc_receptive_field_max': 0,
+    'hd_n_cells': 0,
+    'hd_receptive_field_min': 0,
+    'hd_receptive_field_max': 0,
+    'heading': 'none',
+    'location': 'none',
+    'goal_loc': 'none',
+    'goal_vec': 'none',
+    'goal_csp': True,
+    'agent_csp': False,
+    'goal_csp_egocentric': True,
+    'csp_dim': 256,
+}
+
+obs_dict = generate_obs_dict(params)
+
+env_configs['GW-CSP-Simple-v0'] = {
+    'map_array': simple_map_array,
+    'observations': obs_dict,
+    'continuous': True,
+    'movement_type': 'holonomic',
+    'dt': 0.1,
+    'max_steps': 1000,
+}
 
 for name, kwargs in env_configs.items():
     register(

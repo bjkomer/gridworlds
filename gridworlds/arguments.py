@@ -75,7 +75,7 @@ def add_map_arguments(parser):
     parser.add_argument('--goal-csp', action='store_true', help='use a semantic pointer for the goal location')
     # parser.add_argument('goal-csp-dim', type=int, default=256, help='dimensionality of the goal CSP')
     # TODO: have options for egocentric with and without head direction taken into account
-    parser.add_argument('goal-csp-egocentric', action='store_true', help='compute the goal CSP relative to the agent')
+    parser.add_argument('--goal-csp-egocentric', action='store_true', help='compute the goal CSP relative to the agent')
 
     parser.add_argument('--agent-csp', action='store_true', help='use a semantic pointer for the agent location')
     # parser.add_argument('agent-csp-dim', type=int, default=256, help='dimensionality of the agent CSP')

@@ -82,6 +82,9 @@ def add_map_arguments(parser):
 
     parser.add_argument('--csp-dim', type=int, default=256, help='dimensionality of the continuous semantic pointer')
 
+    parser.add_argument('--param-file', type=str, default='',
+                        help='optional parameter file to load from to overwrite command line arguments')
+
     return parser
 
 

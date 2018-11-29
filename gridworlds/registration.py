@@ -149,6 +149,91 @@ env_configs['GW-CSP-Simple-v0'] = {
     'max_steps': 1000,
 }
 
+env_configs['GW-CSP-Disc-Simple-v0'] = {
+    'map_array': simple_map_array,
+    'observations': obs_dict,
+    'continuous': False,
+    'movement_type': 'holonomic',
+    'dt': 0.1,
+    'max_steps': 20,
+}
+
+simple_small_map_array = np.array([
+    [1, 1, 1, 1, 1, 1],
+    [1, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 1],
+    [1, 1, 1, 1, 1, 1],
+])
+
+env_configs['GW-CSP-Simple-Small-v0'] = {
+    'map_array': simple_small_map_array,
+    'observations': obs_dict,
+    'continuous': True,
+    'movement_type': 'holonomic',
+    'dt': 0.1,
+    'max_steps': 100,
+}
+
+env_configs['GW-CSP-FixedEpisode-Simple-Small-v0'] = {
+    'map_array': simple_small_map_array,
+    'observations': obs_dict,
+    'continuous': True,
+    'movement_type': 'holonomic',
+    'fixed_episode_length': True,
+    'dt': 0.1,
+    'max_steps': 100,
+}
+
+env_configs['GW-CSP-FixedEpisode-Simple-v0'] = {
+    'map_array': simple_map_array,
+    'observations': obs_dict,
+    'continuous': True,
+    'movement_type': 'holonomic',
+    'fixed_episode_length': True,
+    'dt': 0.1,
+    'max_steps': 100,
+}
+
+# Various simple environments for debugging
+params_debug = {
+    'full_map_obs': False,
+    'pob': 0,
+    'max_sensor_dist': 0,
+    'n_sensors': 0,
+    'fov': 0,
+    'normalize_dist_sensors': False,
+    'n_grid_cells': 0,
+    'bc_n_ring': 0,
+    'bc_n_rad': 0,
+    'bc_dist_rad': 0,
+    'bc_receptive_field_min': 0,
+    'bc_receptive_field_max': 0,
+    'hd_n_cells': 0,
+    'hd_receptive_field_min': 0,
+    'hd_receptive_field_max': 0,
+    'heading': 'none',
+    'location': 'none',
+    'goal_loc': 'actual',
+    'goal_vec': 'none',
+    'goal_csp': False,
+    'agent_csp': False,
+    'goal_csp_egocentric': False,
+    'csp_dim': 0,
+}
+obs_dict_debug = generate_obs_dict(params_debug)
+
+env_configs['GW-Debug-Simple-v0'] = {
+    'map_array': simple_map_array,
+    'observations': obs_dict_debug,
+    'continuous': True,
+    'movement_type': 'holonomic',
+    'dt': 0.1,
+    'max_steps': 100,
+    'fixed_episode_length': True,
+}
+
 for name, kwargs in env_configs.items():
     register(
         id=name,

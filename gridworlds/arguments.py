@@ -20,6 +20,8 @@ def add_map_arguments(parser):
     parser.add_argument('--normalize-dist-sensors', action='store_true')
     parser.add_argument('--fov', type=float, default=90, help='field of view of distance sensors, in degrees')
     parser.add_argument('--episode-length', type=int, default=1000, help='length of an episode, in timesteps')
+    parser.add_argument('--fixed-episode-length', action='store_true',
+                        help='task is to get to as many goals as possible in a fixed episode length')
     parser.add_argument('--max-lin-vel', type=float, default=5, help='maximum linear velocity of the agent')
     # parser.add_argument('--min-lin-vel', type=float, default=-1, help='minimum linear velocity of the agent')
     parser.add_argument('--max-ang-vel', type=float, default=5, help='maximum linear angular of the agent')

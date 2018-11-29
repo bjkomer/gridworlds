@@ -128,6 +128,7 @@ env = GridWorldEnv(
     max_ang_vel=params['max_ang_vel'],
     continuous=params['continuous'],
     max_steps=params['episode_length'],
+    fixed_epsidoe_length=params['fixed_episode_length'],
     dt=params['dt'],
     debug_ghost=debug_ghost,
     classifier=classifier,

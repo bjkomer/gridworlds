@@ -75,6 +75,7 @@ class GridWorldEnv(gym.Env):
                  max_ang_vel=np.pi/4,
                  continuous=False,
                  max_steps=1000,
+                 fixed_episode_length=False,
                  dt=.1,
                  wall_penalty=-1.,
                  movement_cost=-.01,
@@ -93,6 +94,7 @@ class GridWorldEnv(gym.Env):
         :param max_ang_vel: maximum angular distance in a single step (directional continuous control)
         :param continuous: if True, action and state are continuous, if False, they are discrete
         :param max_steps: maximum number of steps in an episode
+        :param fixed_episode_length: each episode is a fixed length, and the task is to get to as many goals as possible
         :param dt: time constant for continuous movement
         :param wall_penalty: reward value for hitting a wall
         :param movement_cost: reward value for moving into free space
@@ -164,6 +166,8 @@ class GridWorldEnv(gym.Env):
         self.fixed_start = fixed_start
         self.fixed_goal = fixed_goal
         self.observations = observations
+
+        self.fixed_episode_length = fixed_episode_length
 
         self.debug_ghost = debug_ghost
         self.classifier = classifier
@@ -679,9 +683,15 @@ class GridWorldEnv(gym.Env):
 
         self._update_state(action)
 
-        obs = self._get_obs()
-
         reward, done = self._get_reward_done(self.state, old_state)
+
+        # If running in fixed episode mode, teleport the agent to a new start location
+        # but still give them the reward for getting to the goal
+        if done and self.fixed_episode_length:
+            done = False
+            self._reset_agent()
+
+        obs = self._get_obs()
 
         self.step_count += 1
 
@@ -748,6 +758,17 @@ class GridWorldEnv(gym.Env):
             else:
                 return
 
+    def _reset_agent(self):
+        # Choose a random starting location
+        self.state[[0, 1]] = self.random_free_space(continuous=self.continuous)
+
+        # Choose a random starting heading if the movement type is directional
+        if self.movement_type == 'directional':
+            if self.continuous:
+                self.state[2] = np.random.uniform(low=-np.pi, high=np.pi)
+            else:
+                self.state[2] = np.random.randint(low=0, high=4)
+
     def reset(self, goal_distance=0):
         """
         Reset the environment, with an optional goal_distance parameter to force the chosen goal to be
@@ -766,15 +787,7 @@ class GridWorldEnv(gym.Env):
         if self.fixed_start:
             self.state = self.start_state.copy()
         else:
-            # Choose a random starting location
-            self.state[[0, 1]] = self.random_free_space(continuous=self.continuous)
-
-            # Choose a random starting heading if the movement type is directional
-            if self.movement_type == 'directional':
-                if self.continuous:
-                    self.state[2] = np.random.uniform(low=-np.pi, high=np.pi)
-                else:
-                    self.state[2] = np.random.randint(low=0, high=4)
+            self._reset_agent()
 
         if not self.fixed_goal:
             # TODO: more complicated environments could have a more complex goal

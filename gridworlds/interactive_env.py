@@ -3,6 +3,7 @@
 import sys
 import os
 from gridworlds.envs import GridWorldEnv, generate_obs_dict
+from gridworlds.maze_generation import generate_maze
 import numpy as np
 import time
 import json
@@ -25,7 +26,7 @@ import os.path as osp
 from gridworlds.getch import getch
 
 # This will parse the command line arguments
-from arguments import add_map_arguments
+from arguments import add_map_arguments, args_to_dict
 
 parser = argparse.ArgumentParser('Interactively explore an environment')
 
@@ -43,7 +44,7 @@ parser.add_argument('--clf-history', type=int, default=1, help='length of observ
 parser.add_argument('--goal-distance', type=int, default=0, help='distance of the goal from the start location')
 
 args = parser.parse_args()
-params = vars(args)
+params = args_to_dict(args)
 obs_dict = generate_obs_dict(params)
 
 if params['view_ghost']:
@@ -83,30 +84,6 @@ else:
 # so need to set a seed to make sure the same maze is generated
 np.random.seed(params['seed'])
 
-#from pp_maze_exp import generate_maze
-def generate_maze(map_style='blocks', side_len=10):
-    if map_style == 'maze':
-        maze = RandomMazeGenerator(width=side_len - 2,
-                                   height=side_len - 2,
-                                   complexity=.75, density=.75)
-    elif map_style == 'blocks':
-        maze = RandomBlockMazeGenerator(maze_size=side_len - 2, # the -2 is because the outer wall gets added
-                                        obstacle_ratio=.2,
-                                       )
-    elif map_style == 't':
-        raise NotImplementedError
-        # TODO: figure out what the parameters of the T maze should be to get an appropriate size maze
-        maze = TMazeGenerator()
-    elif map_style == 'morris':
-        maze = WaterMazeGenerator(radius_maze=int(side_len / 2.),
-                           radius_platform=4)
-    elif map_style == 'simple':
-        raise NotImplementedError
-        # TODO: this seems to be expecting a custom layout
-        maze = SimpleMazeGenerator()
-
-    return maze
-
 
 # using WASD instead of arrow keys for consistency
 UP = 119  # W
@@ -117,8 +94,7 @@ RIGHT = 100  # D
 SHUTDOWN = 99  # C
 
 
-maze = generate_maze(map_style=params['map_style'], side_len=params['map_size'])
-map_array = maze.maze
+map_array = generate_maze(map_style=params['map_style'], side_len=params['map_size'])
 
 env = GridWorldEnv(
     map_array=map_array,
@@ -128,10 +104,12 @@ env = GridWorldEnv(
     max_ang_vel=params['max_ang_vel'],
     continuous=params['continuous'],
     max_steps=params['episode_length'],
-    fixed_epsidoe_length=params['fixed_episode_length'],
+    fixed_episode_length=params['fixed_episode_length'],
     dt=params['dt'],
     debug_ghost=debug_ghost,
     classifier=classifier,
+    screen_width=300,
+    screen_height=300,
 )
 
 

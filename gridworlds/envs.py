@@ -84,6 +84,8 @@ class GridWorldEnv(gym.Env):
                  fixed_goal=False,
                  debug_ghost=False,
                  classifier=None,
+                 screen_width=600,
+                 screen_height=600,
     ):
         """
         GridWorld environment compatible with Gym
@@ -103,6 +105,8 @@ class GridWorldEnv(gym.Env):
         :param fixed_goal: if true, the goal will be at the same location every episode
         :param debug_ghost: if true, render an agent where a classifier thinks it is based on current observations
         :param classifier: the classifier function to use for predicting the agent's location
+        :param screen_width: width of the rendering windows
+        :param screen_height: height of the rendering windows
         :param observations: dictionary with keys corresponding to the types of observations available to the agent
                              presence of a key indicates the observation will be returned
                              values of the key indicate values of parameters associated with that observation
@@ -254,8 +258,10 @@ class GridWorldEnv(gym.Env):
         # Variables for renderer #
         ##########################
         # NOTE: assuming square environment
-        self.screen_width = 600
-        self.screen_height = 600
+        if screen_width != screen_height:
+            raise NotImplementedError("Environment currently assumes screen_width = screen_height")
+        self.screen_width = screen_width
+        self.screen_height = screen_height
 
         self.scale = self.screen_width/self.width
 

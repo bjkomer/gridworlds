@@ -1,4 +1,5 @@
 import argparse
+import json
 import numpy as np
 
 from gym_maze.envs.generators import SimpleMazeGenerator, RandomMazeGenerator, \
@@ -98,28 +99,15 @@ def add_ppo_arguments(parser):
     return parser
 
 
-# TODO: make sure all squares in the maze are accessible,
-#       fill in any that are not so they are not chosen as start or goal
-def generate_maze(map_style='blocks', side_len=10, obstacle_ratio=.2):
-    if map_style == 'maze':
-        maze = RandomMazeGenerator(width=side_len - 2,
-                                   height=side_len - 2,
-                                   complexity=.75, density=.75)
-    elif map_style == 'blocks':
-        maze = RandomBlockMazeGenerator(maze_size=side_len - 2,  # the -2 is because the outer wall gets added
-                                        obstacle_ratio=obstacle_ratio,
-                                       )
-    elif map_style == 't':
-        raise NotImplementedError
-        # TODO: figure out what the parameters of the T maze should be to get an appropriate size maze
-        maze = TMazeGenerator()
-    elif map_style == 'morris':
-        maze = WaterMazeGenerator(radius_maze=int(side_len / 2.),
-                           radius_platform=4)
-    elif map_style == 'simple':
-        raise NotImplementedError
-        # TODO: this seems to be expecting a custom layout
-        maze = SimpleMazeGenerator()
+def args_to_dict(args):
+    params = vars(args)
 
-    return maze
+    # If a file is supplied to load the parameters from, load it and override the appropriate defaults
+    if params['param_file']:
+        with open(params['param_file'], "r") as f:
+            file_params = json.load(f)
 
+        # Merge dictionaries, replacing elements in 'params' with 'file_params'
+        params = {**params, **file_params}
+
+    return params

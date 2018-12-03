@@ -335,7 +335,14 @@ class OptimalPlanner(object):
         self.t += 1
         if len(self.actions) == 0:
             print("Warning: No actions to take")
-            return np.zeros(2)
+            if self.continuous:
+                return np.zeros(2)
+            else:
+                # There is currently no 'do not move' action in the discrete case, so just pick a random action
+                if self.directional:
+                    return int(np.random.choice(3, size=1))
+                else:
+                    return int(np.random.choice(4, size=1))
         if self.t > len(self.actions):
             # raise RuntimeError("Attempting to take an action on a completed trajectory")
             print("Warning: Taking an action on a completed trajectory")

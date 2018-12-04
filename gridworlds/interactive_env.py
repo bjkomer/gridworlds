@@ -4,10 +4,12 @@ import sys
 import os
 from gridworlds.envs import GridWorldEnv, generate_obs_dict
 from gridworlds.maze_generation import generate_maze
+from gridworlds.constants import possible_objects
 import numpy as np
 import time
 import json
 import argparse
+from collections import OrderedDict
 # from map_layout import map_layouts
 from gym_maze.envs.generators import SimpleMazeGenerator, RandomMazeGenerator, \
         RandomBlockMazeGenerator, TMazeGenerator, WaterMazeGenerator
@@ -93,11 +95,17 @@ RIGHT = 100  # D
 
 SHUTDOWN = 99  # C
 
+# Define objects to be used as goals
+# If the location is set to None they will be set to random accessible locations (each episode?)
+object_locations = OrderedDict()
+for i in range(args.n_objects):
+    object_locations[possible_objects[i]] = None
 
 map_array = generate_maze(map_style=params['map_style'], side_len=params['map_size'])
 
 env = GridWorldEnv(
     map_array=map_array,
+    object_locations=object_locations,
     observations=obs_dict,
     movement_type=params['movement_type'],
     max_lin_vel=params['max_lin_vel'],

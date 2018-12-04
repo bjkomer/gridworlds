@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class OptimalPlanner(object):
     """
     Given full information in a GridWorldEnv, compute actions that will take the agent
@@ -25,13 +26,14 @@ class OptimalPlanner(object):
         self.step_reward = step_reward
         self.goal_reward = goal_reward
 
-    def form_plan(self, env):
+    def form_plan(self, env, goal_loc=None):
         """
         Create a plan of actions by simulating their effect on a
         deterministic environment.
         In the continuous case, first generate the discrete trajectory that solves
         the maze, and then generate continuous commands to follow that trajectory
         env will also contain the current state information and the goal
+        If a goal_loc is specified it is used instead of the goal found in the environment
         """
 
         # Reset t for the new plan
@@ -43,7 +45,7 @@ class OptimalPlanner(object):
         # # Generate a list of coordinates corresponding to the center of those grid points
         # target_points = self.generate_target_points(coarse_plan)
 
-        target_points = self.generate_coarse_plan(env)
+        target_points = self.generate_coarse_plan(env, goal_loc=goal_loc)
 
         # Generate actions of a controller to move to those points
         self.actions = self.generate_actions(env, target_points)
@@ -51,7 +53,7 @@ class OptimalPlanner(object):
         # self.t = 1
         # return self.actions[0]
 
-    def generate_coarse_plan(self, env, wall_value=1000):
+    def generate_coarse_plan(self, env, goal_loc=None, wall_value=1000):
         """
         use simple wavefront algorithm to find the shortest path
         movement cost of 1 for sides, and 1.42 for diagonals
@@ -64,7 +66,10 @@ class OptimalPlanner(object):
         planning_grid = wall_value * env.map_array.copy()
 
         start_state = np.array([int(np.round(env.state[0])), int(np.round(env.state[1]))])
-        goal_state = np.array([int(np.round(env.goal_state[0])), int(np.round(env.goal_state[1]))])
+        if goal_loc is None:
+            goal_state = np.array([int(np.round(env.goal_state[0])), int(np.round(env.goal_state[1]))])
+        else:
+            goal_state = np.array([int(np.round(goal_loc[0])), int(np.round(goal_loc[1]))])
 
         # start with the goal state
         to_expand = [
@@ -349,13 +354,13 @@ class OptimalPlanner(object):
             return self.actions[-1]
         return self.actions[self.t - 1]
 
-    def act(self, obs, env):
+    def act(self, obs, env, goal=None):
 
         # observations are not needed here with full environment state.
         # they are just included as an argument so the function signature
         # is consistent with other expert policies, which may use observations
 
-        self.form_plan(env)
+        self.form_plan(env, goal_loc=goal)
 
         vpred = self.value_pred()
 

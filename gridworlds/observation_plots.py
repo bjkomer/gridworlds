@@ -66,8 +66,6 @@ class ObservationViewer(object):
             if i >= self.n_plots:
                 break
 
-        print(self.ax_dict)
-
         self.obs = None
 
         self.init_figures()
@@ -115,8 +113,6 @@ class ObservationViewer(object):
         self.ax_dict['boundary_cell'].set_ylim(-limit, limit)
 
         self.bc_circles = np.empty((n_ring * n_rad,), dtype=object)
-
-        print(self.bc_circles.shape)
 
         for r in range(n_rad):
             for th in range(n_ring):

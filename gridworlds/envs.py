@@ -69,6 +69,7 @@ class GridWorldEnv(gym.Env):
 
     def __init__(self,
                  map_array,
+                 object_locations=OrderedDict(),
                  observations=OrderedDict(),
                  movement_type='directional',
                  max_lin_vel=1,
@@ -91,6 +92,9 @@ class GridWorldEnv(gym.Env):
         GridWorld environment compatible with Gym
 
         :param map_array: 2D array containing the map information
+        :param object_locations: dictionary of object name and location pairs.
+                                 If supplied the goal each episode will be to get to a given object.
+                                 If no location is specified, a random one will be chosen each reset
         :param movement_type: 'directional' or 'holonomic'
         :param max_lin_vel: maximum linear distance in a single step (continuous control)
         :param max_ang_vel: maximum angular distance in a single step (directional continuous control)
@@ -164,6 +168,21 @@ class GridWorldEnv(gym.Env):
 
         self.map_array = map_array
         self.map_shape = self.map_array.shape
+
+        self.object_locations = object_locations
+        # The name of the object that is the goal for the particular episode
+        self.goal_object = ''
+        # Store the number of possible goal objects
+        if len(self.object_locations) > 0:
+            self.n_goal_objects = len(self.object_locations.keys())
+            # Fixed list of the string names of the goals
+            self.goal_object_list = list(self.object_locations.keys())
+            self.goal_object_index = 0
+        else:
+            self.n_goal_objects = 0
+            self.goal_object_list = []
+            self.goal_object_index = -1
+
         self.movement_type = movement_type
         self.continuous = continuous
         self.max_steps = max_steps
@@ -229,6 +248,11 @@ class GridWorldEnv(gym.Env):
             self.goal_array[int(self.goal_state[0]), int(self.goal_state[1])] = 1
         else:
             self.goal_array = np.zeros_like(self.map_array)
+
+        # If any object locations haven't been specified, set them to random locations now
+        for name in self.goal_object_list:
+            if self.object_locations[name] is None:
+                self.object_locations[name] = self.random_free_space(continuous=continuous)
 
         # keeping track of steps taken in the episode
         self.step_count = 0
@@ -775,6 +799,41 @@ class GridWorldEnv(gym.Env):
             else:
                 self.state[2] = np.random.randint(low=0, high=4)
 
+    def _reset_goal(self, goal_distance=0):
+        """
+        Choose a random goal location. If a list of goal objects was given to this environment,
+        then choose at random from those objects' locations
+        :param goal_distance: optional parameter for limiting distance of non-object goals from the start location
+        """
+
+        # TODO: more complicated environments could have a more complex goal
+
+        if self.n_goal_objects == 0:
+            # Choose a random goal location
+            if goal_distance > 0:
+                self.goal_state[[0, 1]] = self.constrained_free_space(center=self.state[[0, 1]], distance=goal_distance)
+            else:
+                self.goal_state[[0, 1]] = self.random_free_space()
+
+            # Pick a new goal if the goal is the same as the starting location
+            # TODO: in continuous space, this equality check won't be enough
+            while (self.state[[0, 1]] == self.goal_state[[0, 1]]).all():
+                if goal_distance > 0:
+                    self.goal_state[[0, 1]] = self.constrained_free_space(center=self.state[[0, 1]],
+                                                                          distance=goal_distance)
+                else:
+                    self.goal_state[[0, 1]] = self.random_free_space()
+        else:
+            # Choose a random object to make the goal
+            # TODO: there are a lot of redundant variables here, clean this up in the future
+            self.goal_object_index = int(np.random.randint(low=0, high=self.n_goal_objects, size=1))
+            self.goal_object = self.goal_object_list[self.goal_object_index]
+            self.goal_state[[0, 1]] = self.object_locations[self.goal_object]
+
+        # Populate the goal array, in case the observations use this representation
+        self.goal_array = np.zeros_like(self.map_array)
+        self.goal_array[int(self.goal_state[0]), int(self.goal_state[1])] = 1
+
     def reset(self, goal_distance=0):
         """
         Reset the environment, with an optional goal_distance parameter to force the chosen goal to be
@@ -796,25 +855,7 @@ class GridWorldEnv(gym.Env):
             self._reset_agent()
 
         if not self.fixed_goal:
-            # TODO: more complicated environments could have a more complex goal
-            # Choose a random goal location
-            if goal_distance > 0:
-                self.goal_state[[0, 1]] = self.constrained_free_space(center=self.state[[0, 1]], distance=goal_distance)
-            else:
-                self.goal_state[[0, 1]] = self.random_free_space()
-
-            # Pick a new goal if the goal is the same as the starting location
-            # TODO: in continuous space, this equality check won't be enough
-            while (self.state[[0, 1]] == self.goal_state[[0, 1]]).all():
-                if goal_distance > 0:
-                    self.goal_state[[0, 1]] = self.constrained_free_space(center=self.state[[0, 1]],
-                                                                          distance=goal_distance)
-                else:
-                    self.goal_state[[0, 1]] = self.random_free_space()
-
-            # Populate the goal array, in case the observations use this representation
-            self.goal_array = np.zeros_like(self.map_array)
-            self.goal_array[int(self.goal_state[0]), int(self.goal_state[1])] = 1
+            self._reset_goal(goal_distance=goal_distance)
 
         self.step_count = 0
 
@@ -824,6 +865,15 @@ class GridWorldEnv(gym.Env):
                 self._scale_x_pos(self.goal_state[0]),
                 self._scale_y_pos(self.goal_state[1]),
             )
+
+            # modify goal object images if needed here
+            i = 0
+            for name, loc in self.object_locations.items():
+                self.obj_img_trans[i].set_translation(
+                    self._scale_x_pos(loc[0]),
+                    self._scale_y_pos(loc[1]),
+                )
+                i += 1
 
         return self._get_obs()
 
@@ -992,6 +1042,27 @@ class GridWorldEnv(gym.Env):
                     )
                     wall_poly.add_attr(wall_trans)
                     self.viewer.add_geom(wall_poly)
+
+        # Add goal objects as images if required
+        # NOTE: this is assuming the names of the items exist in the assets folder
+        # FIXME: allow the images to be loaded from anywhere
+        if len(self.object_locations) > 0:
+            self.obj_img_trans = []
+            for name, loc in self.object_locations.items():
+                fname = os.path.join(
+                    os.path.dirname(__file__),
+                    'assets/icons8-{0}-64.png'.format(name)
+                )
+                img = rendering.Image(fname=fname, width=self.tile_size, height=self.tile_size)
+                self.obj_img_trans.append(
+                    rendering.Transform(
+                        translation=(self._scale_x_pos(loc[0]),
+                                     self._scale_y_pos(loc[1]))
+                    )
+                )
+                img.add_attr(self.obj_img_trans[-1])
+
+                self.viewer.add_geom(img)
 
     def _render(self, mode='human', close=False):
 

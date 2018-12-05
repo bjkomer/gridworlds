@@ -1,4 +1,3 @@
-from optimal_planner import OptimalPlanner
 import numpy as np
 import time
 import gym

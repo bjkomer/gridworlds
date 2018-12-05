@@ -148,9 +148,10 @@ class OptimalPlanner(object):
 
         for c in checks:
             x, y, value = c
-            if planning_grid[x, y] != wall_value and (planning_grid[x, y] == 0 or planning_grid[x, y] > value):
-                planning_grid[x, y] = value
-                new_nodes.append((x, y))
+            if (0 <= x < planning_grid.shape[0]) and (0 <= y < planning_grid.shape[1]):
+                if planning_grid[x, y] != wall_value and (planning_grid[x, y] == 0 or planning_grid[x, y] > value):
+                    planning_grid[x, y] = value
+                    new_nodes.append((x, y))
 
 
         # Only attempt to move along diagonals if using continuous control
@@ -158,11 +159,12 @@ class OptimalPlanner(object):
             # handle diagonals differently, only allow passage if both edges are also free
             for c in diag_checks:
                 x, y, value = c
-                if planning_grid[x, y] != wall_value and (planning_grid[x, y] == 0 or planning_grid[x, y] > value):
-                    # extra check for diagonals
-                    if planning_grid[x, node[1]] != wall_value and planning_grid[node[0], y] != wall_value:
-                        planning_grid[x, y] = value
-                        new_nodes.append((x, y))
+                if (0 <= x < planning_grid.shape[0]) and (0 <= y < planning_grid.shape[1]):
+                    if planning_grid[x, y] != wall_value and (planning_grid[x, y] == 0 or planning_grid[x, y] > value):
+                        # extra check for diagonals
+                        if planning_grid[x, node[1]] != wall_value and planning_grid[node[0], y] != wall_value:
+                            planning_grid[x, y] = value
+                            new_nodes.append((x, y))
 
         return new_nodes
 

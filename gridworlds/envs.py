@@ -259,24 +259,10 @@ class GridWorldEnv(gym.Env):
 
         # State transition mappings for discrete environments
         # given movement_action, compute displacement
-        self.holonomic_transitions = {
-            self.UP: np.array([0, 1]),
-            self.DOWN: np.array([0, -1]),
-            self.LEFT: np.array([-1, 0]),
-            self.RIGHT: np.array([1, 0]),
-        }
+        self.holonomic_transitions = constants.holonomic_transitions
 
         # given (direction_action, current_heading) produce (next_heading)
-        self.directional_transitions = {
-            (self.LEFT, self.UP): self.LEFT,
-            (self.RIGHT, self.UP): self.RIGHT,
-            (self.LEFT, self.DOWN): self.RIGHT,
-            (self.RIGHT, self.DOWN): self.LEFT,
-            (self.LEFT, self.LEFT): self.DOWN,
-            (self.RIGHT, self.LEFT): self.UP,
-            (self.LEFT, self.RIGHT): self.UP,
-            (self.RIGHT, self.RIGHT): self.DOWN,
-        }
+        self.directional_transitions = constants.directional_transitions
 
         ##########################
         # Variables for renderer #

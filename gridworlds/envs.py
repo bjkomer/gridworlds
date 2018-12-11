@@ -87,6 +87,7 @@ class GridWorldEnv(gym.Env):
                  classifier=None,
                  screen_width=600,
                  screen_height=600,
+                 debug_mode=True,
     ):
         """
         GridWorld environment compatible with Gym
@@ -111,6 +112,7 @@ class GridWorldEnv(gym.Env):
         :param classifier: the classifier function to use for predicting the agent's location
         :param screen_width: width of the rendering windows
         :param screen_height: height of the rendering windows
+        :param debug_mode: if true, render/print extra things for debugging
         :param observations: dictionary with keys corresponding to the types of observations available to the agent
                              presence of a key indicates the observation will be returned
                              values of the key indicate values of parameters associated with that observation
@@ -165,6 +167,8 @@ class GridWorldEnv(gym.Env):
         """
 
         assert movement_type in ['directional', 'holonomic']
+
+        self.debug_mode = debug_mode
 
         self.map_array = map_array
         self.map_shape = self.map_array.shape
@@ -263,6 +267,9 @@ class GridWorldEnv(gym.Env):
 
         # given (direction_action, current_heading) produce (next_heading)
         self.directional_transitions = constants.directional_transitions
+
+        # keep track of the observations, so they can be accessed internally by the renderer
+        self.obs = self._get_obs()
 
         ##########################
         # Variables for renderer #
@@ -707,7 +714,7 @@ class GridWorldEnv(gym.Env):
             done = False
             self._reset_agent()
 
-        obs = self._get_obs()
+        self.obs = self._get_obs()
 
         self.step_count += 1
 
@@ -718,7 +725,7 @@ class GridWorldEnv(gym.Env):
 
         info = {}
 
-        return obs, reward, done, info
+        return self.obs, reward, done, info
 
     def _update_state(self, action):
 
@@ -861,7 +868,9 @@ class GridWorldEnv(gym.Env):
                 )
                 i += 1
 
-        return self._get_obs()
+        self.obs = self._get_obs()
+
+        return self.obs
 
     def set_agent_state(self, state):
         """
@@ -907,13 +916,16 @@ class GridWorldEnv(gym.Env):
 
         sensors = map_utils.generate_sensor_readings(
             map_arr=self.map_array,
-            zoom_level=4,
+            zoom_level=20,#20,#4,
             n_sensors=n_sensors,
             fov_rad=fov_rad,
-            x=state[0],
-            y=state[1],
+            # x=state[0],
+            # y=state[1],
+            x=state[0]+.5,  # seems like it's necessary to add .5 to get correct looking measurements
+            y=state[1]+.5,
             th=state[2],
             max_sensor_dist=max_dist,
+            debug_value=0,
         )
 
         if normalize:
@@ -1050,6 +1062,37 @@ class GridWorldEnv(gym.Env):
 
                 self.viewer.add_geom(img)
 
+        # Lines for the distance sensors
+        if 'dist_sensors' in self.observations.keys():
+            self.dist_sensor_lines = []
+            n_sensors = self.observations['dist_sensors']['n_sensors']
+            for i in range(n_sensors):
+                line = rendering.Line()
+                line.set_color(*to_rgb('red'))
+                self.dist_sensor_lines.append(line)
+                self.viewer.add_geom(line)
+
+        # Debugging
+        if self.debug_mode:
+            for x in range(self.map_array.shape[0]):
+                x_scale = self._scale_x_pos(x)
+                line = rendering.Line(start=(x_scale, 0), end=(x_scale, self.screen_height))
+                line.set_color(*to_rgb('green'))
+                self.viewer.add_geom(line)
+            for y in range(self.map_array.shape[1]):
+                y_scale = self._scale_x_pos(y)
+                line = rendering.Line(start=(0, y_scale), end=(self.screen_width, y_scale))
+                line.set_color(*to_rgb('green'))
+                self.viewer.add_geom(line)
+
+            self.crosshair_x = rendering.Line()
+            self.crosshair_x.set_color(*to_rgb('purple'))
+            self.viewer.add_geom(self.crosshair_x)
+
+            self.crosshair_y = rendering.Line()
+            self.crosshair_y.set_color(*to_rgb('purple'))
+            self.viewer.add_geom(self.crosshair_y)
+
     def _render(self, mode='human', close=False):
 
         if close:
@@ -1084,6 +1127,40 @@ class GridWorldEnv(gym.Env):
 
             self.ghost_trans.set_translation(ghost_x, ghost_y)
             self.ghost_trans.set_rotation(self._scale_theta(ghost_th))
+
+        # Lines for the distance sensors
+        if 'dist_sensors' in self.observations.keys():
+            n_sensors = self.observations['dist_sensors']['n_sensors']
+            fov_rad = self.observations['dist_sensors']['fov_rad']
+            normalize = self.observations['dist_sensors']['normalize']
+            max_dist = self.observations['dist_sensors']['max_dist']
+            dists = self.obs[self.obs_index_dict['dist_sensors']]
+            if normalize:
+                dists *= max_dist
+            ang_interval = np.pi / len(dists)
+            start_ang = -fov_rad / 2. + self.state[2]
+            angs = np.linspace(-fov_rad / 2. + self.state[2], fov_rad / 2. + self.state[2], n_sensors)
+            for i, line in enumerate(self.dist_sensor_lines):
+                # x = self._scale_x_pos(self.state[0] + dists[i] * np.cos(start_ang + i * ang_interval))
+                # y = self._scale_y_pos(self.state[1] + dists[i] * np.sin(start_ang + i * ang_interval))
+                x = self._scale_x_pos(self.state[0] + dists[i] * np.cos(angs[i]))
+                y = self._scale_y_pos(self.state[1] + dists[i] * np.sin(angs[i]))
+                line.start = (agent_x, agent_y)
+                line.end = (x, y)
+
+                # screen_dist = np.sqrt((agent_x - x)**2 + (agent_y - y)**2)
+                # scaled_dist = screen_dist / self.scale
+                # print(dists[i], scaled_dist)
+
+                # line.end = (x - self.tile_size / 2., y - self.tile_size / 2.)
+
+        # Debugging
+        if self.debug_mode:
+            self.crosshair_x.start = (agent_x, 0)
+            self.crosshair_x.end = (agent_x, self.screen_height)
+
+            self.crosshair_y.start = (0, agent_y)
+            self.crosshair_y.end = (self.screen_width, agent_y)
 
         return self.viewer.render(return_rgb_array = mode=='rgb_array')
 

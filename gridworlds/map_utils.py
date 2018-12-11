@@ -275,6 +275,9 @@ def get_collision_coord(map_array, x, y, th,
         elif debug_value == 3:
             if map_array[int(round(cx + .5)), int(round(cy + .5))] == 1:
                 return (i - 1)
+        elif debug_value == 4:
+            if map_array[int(round(cx)), int(round(cy))] == 1:
+                return i
 
     return max_sensor_dist
 

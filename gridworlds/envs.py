@@ -919,10 +919,10 @@ class GridWorldEnv(gym.Env):
             zoom_level=20,#20,#4,
             n_sensors=n_sensors,
             fov_rad=fov_rad,
-            # x=state[0],
-            # y=state[1],
-            x=state[0]+.5,  # seems like it's necessary to add .5 to get correct looking measurements
-            y=state[1]+.5,
+            x=state[0],
+            y=state[1],
+            # x=state[0]+.5,  # seems like it's necessary to add .5 to get correct looking measurements
+            # y=state[1]+.5,
             th=state[2],
             max_sensor_dist=max_dist,
             debug_value=0,
@@ -1093,6 +1093,13 @@ class GridWorldEnv(gym.Env):
             self.crosshair_y.set_color(*to_rgb('purple'))
             self.viewer.add_geom(self.crosshair_y)
 
+            # self.central_lines = []
+            # for i in range(self.map_array.shape[0]):
+            #     for j in range(self.map_array.shape[1]):
+            #         self.central_lines.append(rendering.Line(start=(self._scale_x_pos(i), self._scale_y_pos(j)), end=(0, 0)))
+            #         self.central_lines[-1].set_color(*to_rgb('yellow'))
+            #         self.viewer.add_geom(self.central_lines[-1])
+
     def _render(self, mode='human', close=False):
 
         if close:
@@ -1161,6 +1168,9 @@ class GridWorldEnv(gym.Env):
 
             self.crosshair_y.start = (0, agent_y)
             self.crosshair_y.end = (self.screen_width, agent_y)
+
+            # for line in self.central_lines:
+            #     line.end = (agent_x, agent_y)
 
         return self.viewer.render(return_rgb_array = mode=='rgb_array')
 

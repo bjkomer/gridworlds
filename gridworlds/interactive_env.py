@@ -103,6 +103,19 @@ for i in range(args.n_objects):
 
 map_array = generate_maze(map_style=params['map_style'], side_len=params['map_size'])
 
+# map_array = np.array([
+#     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+#     [1, 1, 1, 1, 1, 1, 1, 1, 0, 1],
+#     [1, 1, 1, 1, 1, 1, 1, 0, 0, 1],
+#     [1, 1, 1, 1, 1, 1, 0, 0, 0, 1],
+#     [1, 1, 1, 1, 1, 0, 0, 0, 0, 1],
+#     [1, 1, 1, 1, 0, 0, 0, 0, 0, 1],
+#     [1, 1, 1, 0, 0, 0, 0, 0, 0, 1],
+#     [1, 1, 0, 0, 0, 0, 0, 0, 0, 1],
+#     [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+#     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+# ])
+
 env = GridWorldEnv(
     map_array=map_array,
     object_locations=object_locations,

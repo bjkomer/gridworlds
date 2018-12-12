@@ -224,13 +224,14 @@ def generate_sensor_readings(map_arr,
     angs = np.linspace(-fov_rad / 2. + th, fov_rad / 2. + th, n_sensors)
 
     for i, ang in enumerate(angs):
-        dists[i] = get_collision_coord(arr_zoom, x * zoom_level, y * zoom_level, ang, max_sensor_dist * zoom_level,
-                                       debug_value=debug_value) / zoom_level
+        # dists[i] = get_collision_coord(arr_zoom, x * zoom_level, y * zoom_level, ang, max_sensor_dist * zoom_level,
+        #                                debug_value=debug_value) / zoom_level
+        dists[i] = get_collision_coord2(map_arr, x, y, ang, max_sensor_dist)
 
     return dists
 
 
-def get_collision_coord(map_array, x, y, th,
+def get_collision_coord_old(map_array, x, y, th,
                         max_sensor_dist=10 * 4,
                         debug_value=0,
                         ):
@@ -278,6 +279,33 @@ def get_collision_coord(map_array, x, y, th,
         elif debug_value == 4:
             if map_array[int(round(cx)), int(round(cy))] == 1:
                 return i
+
+    return max_sensor_dist
+
+
+def get_collision_coord(map_array, x, y, th,
+                        max_sensor_dist=10,
+                        debug_value=2,
+                        dr=.05,
+                        ):
+    """
+    Find the first occupied space given a start point and direction
+    """
+    # Define the step sizes
+    dx = np.cos(th)*dr
+    dy = np.sin(th)*dr
+
+    # Initialize to starting point
+    cx = x
+    cy = y
+
+    for i in range(int(max_sensor_dist/dr)):
+        # Move one unit in the direction of the sensor
+        cx += dx
+        cy += dy
+
+        if map_array[int(round(cx)), int(round(cy))] == 1:
+            return (i - 1)*dr
 
     return max_sensor_dist
 

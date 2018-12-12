@@ -87,7 +87,7 @@ class GridWorldEnv(gym.Env):
                  classifier=None,
                  screen_width=600,
                  screen_height=600,
-                 debug_mode=True,
+                 debug_mode=False,
     ):
         """
         GridWorld environment compatible with Gym
@@ -916,10 +916,10 @@ class GridWorldEnv(gym.Env):
 
         sensors = map_utils.generate_sensor_readings(
             map_arr=self.map_array,
-            zoom_level=20,#20,#4,
+            # zoom_level=20,#20,#4,
             n_sensors=n_sensors,
             fov_rad=fov_rad,
-            x=state[0],
+            x=state[0],  # this way works best for the fixed sensors
             y=state[1],
             # x=state[0]+.5,  # seems like it's necessary to add .5 to get correct looking measurements
             # y=state[1]+.5,

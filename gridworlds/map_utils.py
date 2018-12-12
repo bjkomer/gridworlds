@@ -218,7 +218,7 @@ def generate_sensor_readings(map_arr,
     calculate the distance readings of each sensor to the nearest obstacle
     uses supersampling to find the approximate collision points
     """
-    arr_zoom = scipy.ndimage.zoom(map_arr, zoom_level, order=0)
+    # arr_zoom = scipy.ndimage.zoom(map_arr, zoom_level, order=0)
     dists = np.zeros((n_sensors,))
 
     angs = np.linspace(-fov_rad / 2. + th, fov_rad / 2. + th, n_sensors)
@@ -226,7 +226,7 @@ def generate_sensor_readings(map_arr,
     for i, ang in enumerate(angs):
         # dists[i] = get_collision_coord(arr_zoom, x * zoom_level, y * zoom_level, ang, max_sensor_dist * zoom_level,
         #                                debug_value=debug_value) / zoom_level
-        dists[i] = get_collision_coord2(map_arr, x, y, ang, max_sensor_dist)
+        dists[i] = get_collision_coord(map_arr, x, y, ang, max_sensor_dist)
 
     return dists
 

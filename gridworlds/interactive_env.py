@@ -28,7 +28,7 @@ import os.path as osp
 from gridworlds.getch import getch
 
 # This will parse the command line arguments
-from arguments import add_map_arguments, args_to_dict
+from gridworlds.arguments import add_map_arguments, args_to_dict
 
 parser = argparse.ArgumentParser('Interactively explore an environment')
 

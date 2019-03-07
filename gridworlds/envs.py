@@ -88,6 +88,8 @@ class GridWorldEnv(gym.Env):
                  screen_width=600,
                  screen_height=600,
                  debug_mode=False,
+                 csp_scaling=1,  # multiply state by this value before creating a csp
+                 csp_offset=0,  # subtract this value from state before creating a csp
     ):
         """
         GridWorld environment compatible with Gym
@@ -169,6 +171,10 @@ class GridWorldEnv(gym.Env):
         assert movement_type in ['directional', 'holonomic']
 
         self.debug_mode = debug_mode
+
+        # Workaround for support for models trained with CSPs with different origin and scale
+        self.csp_scaling = csp_scaling
+        self.csp_offset = csp_offset
 
         self.map_array = map_array
         self.map_shape = self.map_array.shape
@@ -621,8 +627,8 @@ class GridWorldEnv(gym.Env):
                     x = self.goal_state[0]
                     y = self.goal_state[1]
                 vec = csp_utils.encode_point(
-                    x=x,
-                    y=y,
+                    x=(x - self.csp_offset)*self.csp_scaling,
+                    y=(y - self.csp_offset)*self.csp_scaling,
                     x_axis_vec=self.observations[obs]['x_axis_vec'],
                     y_axis_vec=self.observations[obs]['y_axis_vec']
                 ).v
@@ -636,8 +642,8 @@ class GridWorldEnv(gym.Env):
                 x = self.state[0]
                 y = self.state[1]
                 vec = csp_utils.encode_point(
-                    x=x,
-                    y=y,
+                    x=(x - self.csp_offset)*self.csp_scaling,
+                    y=(y - self.csp_offset)*self.csp_scaling,
                     x_axis_vec=self.observations[obs]['x_axis_vec'],
                     y_axis_vec=self.observations[obs]['y_axis_vec']
                 ).v

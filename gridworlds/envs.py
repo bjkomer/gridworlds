@@ -1500,9 +1500,15 @@ def generate_obs_dict(params):
         }
     if params['csp_dim'] > 0:
         # TODO: make sure the unitary vectors created here are unique and controlled by the seed
-        # TODO: have an option to supply specific vectors in the future
-        x_axis_vec = csp_utils.unitary_vector(params['csp_dim'])
-        y_axis_vec = csp_utils.unitary_vector(params['csp_dim'])
+        # TODO: have an option to supply specific vectors in the future NOTE: expecting SP rather than numpy array
+        if params['x_axis_vec']:
+            x_axis_vec = params['x_axis_vec']
+        else:
+            x_axis_vec = csp_utils.unitary_vector(params['csp_dim'])
+        if params['y_axis_vec']:
+            y_axis_vec = params['y_axis_vec']
+        else:
+            y_axis_vec = csp_utils.unitary_vector(params['csp_dim'])
     if params['goal_csp']:
         obs['goal_csp'] = {
             'egocentric': params['goal_csp_egocentric'],

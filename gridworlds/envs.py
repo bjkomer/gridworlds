@@ -88,6 +88,8 @@ class GridWorldEnv(gym.Env):
                  screen_width=600,
                  screen_height=600,
                  debug_mode=False,
+                 csp_offset=0,
+                 csp_scaling=1,
     ):
         """
         GridWorld environment compatible with Gym
@@ -169,6 +171,10 @@ class GridWorldEnv(gym.Env):
         assert movement_type in ['directional', 'holonomic']
 
         self.debug_mode = debug_mode
+
+        # Workaround for using policies trained on different SSP scalings and offsets
+        self.csp_offset = csp_offset
+        self.csp_scaling = csp_scaling
 
         self.map_array = map_array
         self.map_shape = self.map_array.shape
@@ -621,8 +627,8 @@ class GridWorldEnv(gym.Env):
                     x = self.goal_state[0]
                     y = self.goal_state[1]
                 vec = csp_utils.encode_point(
-                    x=x,
-                    y=y,
+                    x=(x - self.csp_offset) * self.csp_scaling,
+                    y=(y - self.csp_offset) * self.csp_scaling,
                     x_axis_vec=self.observations[obs]['x_axis_vec'],
                     y_axis_vec=self.observations[obs]['y_axis_vec']
                 ).v
@@ -636,8 +642,8 @@ class GridWorldEnv(gym.Env):
                 x = self.state[0]
                 y = self.state[1]
                 vec = csp_utils.encode_point(
-                    x=x,
-                    y=y,
+                    x=(x - self.csp_offset) * self.csp_scaling,
+                    y=(y - self.csp_offset) * self.csp_scaling,
                     x_axis_vec=self.observations[obs]['x_axis_vec'],
                     y_axis_vec=self.observations[obs]['y_axis_vec']
                 ).v

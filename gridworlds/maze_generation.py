@@ -7,6 +7,7 @@ from gym_maze.envs.generators import SimpleMazeGenerator, RandomMazeGenerator, \
 
 def generate_maze(map_style='blocks', side_len=10, obstacle_ratio=.2):
     if map_style == 'maze':
+        # NOTE: only allows odd shapes
         maze = RandomMazeGenerator(width=side_len - 2,
                                    height=side_len - 2,
                                    complexity=.75, density=.75)

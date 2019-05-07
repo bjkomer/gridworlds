@@ -90,8 +90,6 @@ class GridWorldEnv(gym.Env):
                  debug_mode=False,
                  csp_scaling=1,  # multiply state by this value before creating a csp
                  csp_offset=0,  # subtract this value from state before creating a csp
-
->>>>>>> f6e33949413e894a78457edacbab02ec69de6ff4
     ):
         """
         GridWorld environment compatible with Gym

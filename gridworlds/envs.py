@@ -1506,11 +1506,11 @@ def generate_obs_dict(params):
     if params['csp_dim'] > 0:
         # TODO: make sure the unitary vectors created here are unique and controlled by the seed
         # TODO: have an option to supply specific vectors in the future NOTE: expecting SP rather than numpy array
-        if params['x_axis_vec']:
+        if 'x_axis_vec' in params:
             x_axis_vec = params['x_axis_vec']
         else:
             x_axis_vec = csp_utils.unitary_vector(params['csp_dim'])
-        if params['y_axis_vec']:
+        if 'y_axis_vec' in params:
             y_axis_vec = params['y_axis_vec']
         else:
             y_axis_vec = csp_utils.unitary_vector(params['csp_dim'])

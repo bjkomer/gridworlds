@@ -16,10 +16,16 @@ except ImportError:
 # Convert a string colour to rgb arguments with: *to_rgb(my_str)
 from matplotlib.colors import to_rgb
 
-if "DISPLAY" in os.environ:
-    from gym.envs.classic_control import rendering
-else:
+# if "DISPLAY" in os.environ:
+#     from gym.envs.classic_control import rendering
+# else:
+#     print("No Display detected, skipping rendering imports")
+
+display = os.environ.get('DISPLAY')
+if display is None or 'localhost' in display:
     print("No Display detected, skipping rendering imports")
+else:
+    from gym.envs.classic_control import rendering
 
 
 def rotate_vector(vec, rot_axis, theta):

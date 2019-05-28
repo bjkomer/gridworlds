@@ -1185,6 +1185,23 @@ class GridWorldEnv(gym.Env):
 
         return self.viewer.render(return_rgb_array = mode=='rgb_array')
 
+    def render_ghost(self, x=0, y=0, th=0):
+        """
+        Render a ghost agent to a particular location. For debugging
+        :param x: x-position of the ghost, in env coordinates
+        :param y: y-position of the ghost, in env coordinates
+        :param th: orientation of the ghost, in env coordinates
+        :return:
+        """
+
+        ghost_x = self._scale_x_pos(x)
+        ghost_y = self._scale_y_pos(y)
+
+        self.ghost_trans.set_translation(ghost_x, ghost_y)
+        self.ghost_trans.set_rotation(self._scale_theta(th))
+
+        return self.viewer.render()
+
     def compute_head_direction_cell_activations(self):
         n_hd_cells = self.observations['hd_cell']['n_cells']
         # TODO: use these receptive field values

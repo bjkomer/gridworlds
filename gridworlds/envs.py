@@ -261,6 +261,11 @@ class GridWorldEnv(gym.Env):
             # Populate the goal array, in case the observations use this representation
             self.goal_array = np.zeros_like(self.map_array)
             self.goal_array[int(self.goal_state[0]), int(self.goal_state[1])] = 1
+
+            # NOTE: hacking this in for full_system_trajectories.py to work
+            self.goal_object_index = 0
+            self.goal_object = self.goal_object_list[self.goal_object_index]
+            self.object_locations[self.goal_object] = self.goal_state[[0, 1]]
         else:
             self.goal_array = np.zeros_like(self.map_array)
 

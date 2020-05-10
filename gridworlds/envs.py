@@ -96,6 +96,7 @@ class GridWorldEnv(gym.Env):
                  debug_mode=False,
                  csp_scaling=1,  # multiply state by this value before creating a csp
                  csp_offset=0,  # subtract this value from state before creating a csp
+                 goal_distance=0,  # use this goal distance for the reset. 0 for any distance
     ):
         """
         GridWorld environment compatible with Gym
@@ -206,6 +207,8 @@ class GridWorldEnv(gym.Env):
         self.observations = observations
 
         self.fixed_episode_length = fixed_episode_length
+
+        self.goal_distance = goal_distance
 
         self.debug_ghost = debug_ghost
         self.classifier = classifier
@@ -864,7 +867,11 @@ class GridWorldEnv(gym.Env):
             self._reset_agent()
 
         if not self.fixed_goal:
-            self._reset_goal(goal_distance=goal_distance)
+            if self.goal_distance != 0:
+                # if the environment is defined with a goal distance, use that
+                self._reset_goal(goal_distance=self.goal_distance)
+            else:
+                self._reset_goal(goal_distance=goal_distance)
 
         self.step_count = 0
 

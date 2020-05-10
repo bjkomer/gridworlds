@@ -239,6 +239,7 @@ for name, kwargs in env_configs.items():
         id=name,
         entry_point='gridworlds.envs:GridWorldEnv',
         kwargs=kwargs,
-        tags={'wrapper_config.TimeLimit.max_episode_steps': 1000},
+        # tags={'wrapper_config.TimeLimit.max_episode_steps': 1000},
+        max_episode_steps=1000,
         nondeterministic=False,
     )

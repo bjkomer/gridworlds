@@ -994,7 +994,7 @@ class GridWorldEnv(gym.Env):
                     return np.array([x, y])
         else:
             while True:
-                x, y = np.random.randint(low=min_x, high=max_x), np.random.randint(low=min_y, high=max_y)
+                x, y = np.random.randint(low=min_x, high=max_x + 1), np.random.randint(low=min_y, high=max_y + 1)
                 if self.map_array[x, y] == 0:
                     return np.array([x, y])
 

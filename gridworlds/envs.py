@@ -97,6 +97,7 @@ class GridWorldEnv(gym.Env):
                  csp_scaling=1,  # multiply state by this value before creating a csp
                  csp_offset=0,  # subtract this value from state before creating a csp
                  goal_distance=0,  # use this goal distance for the reset. 0 for any distance
+                 normalize_actions=False,  # if true, continuous holonomic actions will lie on the unit circle
     ):
         """
         GridWorld environment compatible with Gym
@@ -209,6 +210,7 @@ class GridWorldEnv(gym.Env):
         self.fixed_episode_length = fixed_episode_length
 
         self.goal_distance = goal_distance
+        self.normalize_actions = normalize_actions
 
         self.debug_ghost = debug_ghost
         self.classifier = classifier
@@ -722,6 +724,13 @@ class GridWorldEnv(gym.Env):
     def step(self, action):
 
         old_state = self.state.copy()
+
+        if self.normalize_actions:
+            norm = np.linalg.norm(action)
+            if abs(norm) < 0.0001:
+                action[:] = 0
+            else:
+                action = action / norm
 
         self._update_state(action)
 

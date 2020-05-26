@@ -98,6 +98,8 @@ class GridWorldEnv(gym.Env):
                  csp_offset=0,  # subtract this value from state before creating a csp
                  goal_distance=0,  # use this goal distance for the reset. 0 for any distance
                  normalize_actions=False,  # if true, continuous holonomic actions will lie on the unit circle
+                 pseudoreward_mag=0,  # if nonzero, differential pseudoreward based on distance to the goal
+                 pseudoreward_std=1,  # std of the gaussian differential pseudoreward, used if mag is nonzero
     ):
         """
         GridWorld environment compatible with Gym
@@ -225,6 +227,9 @@ class GridWorldEnv(gym.Env):
         self.wall_penalty = wall_penalty
         self.movement_cost = movement_cost
         self.goal_reward = goal_reward
+
+        self.pseudoreward_mag = pseudoreward_mag
+        self.pseudoreward_sigma_sq = pseudoreward_std**2
 
         # Dictionary mapping from observation name to the indices of the observation vector where they are found
         # generated inside '_build_observation_space()'
@@ -711,6 +716,9 @@ class GridWorldEnv(gym.Env):
         if done:
             reward = self.goal_reward  # 1
 
+        if self.pseudoreward_mag > 0:
+            reward += self.compute_pseudoreward(new_state, old_state)
+
         return reward, done
 
     def _goal_check(self):
@@ -719,6 +727,21 @@ class GridWorldEnv(gym.Env):
             return True
         else:
             return False
+
+    def compute_pseudoreward(self, new_state, old_state):
+        # pseudoreward has a gaussian fall-off from the goal location
+        # it is a differential, so reward is only gained when moving toward the goal
+        # it is a penalty when moving away
+        # random movement on average will gain no pseudoreward
+        return self.pseudoreward_mag * (np.exp(
+            -(
+                    (self.goal_state[0] - new_state[0]) ** 2 + (self.goal_state[1] - new_state[1]) ** 2
+            ) / self.pseudoreward_sigma_sq
+        ) - np.exp(
+            -(
+                    (self.goal_state[0] - old_state[0]) ** 2 + (self.goal_state[1] - old_state[1]) ** 2
+            ) / self.pseudoreward_sigma_sq
+        ))
 
     #def _step(self, action):
     def step(self, action):

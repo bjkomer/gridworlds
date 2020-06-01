@@ -100,6 +100,7 @@ class GridWorldEnv(gym.Env):
                  normalize_actions=False,  # if true, continuous holonomic actions will lie on the unit circle
                  pseudoreward_mag=0,  # if nonzero, differential pseudoreward based on distance to the goal
                  pseudoreward_std=1,  # std of the gaussian differential pseudoreward, used if mag is nonzero
+                 seed=13,
     ):
         """
         GridWorld environment compatible with Gym
@@ -179,6 +180,9 @@ class GridWorldEnv(gym.Env):
         """
 
         assert movement_type in ['directional', 'holonomic']
+
+        # used when choosing random free spaces
+        self.rng = np.random.RandomState(seed=seed)
 
         self.debug_mode = debug_mode
 
@@ -997,12 +1001,12 @@ class GridWorldEnv(gym.Env):
         # TODO: make this more efficient
         if continuous:
             while True:
-                x, y = np.random.uniform(self.width), np.random.uniform(self.height)
+                x, y = self.rng.uniform(self.width), np.random.uniform(self.height)
                 if self.free_space([x, y]):
                     return np.array([x, y])
         else:
             while True:
-                x, y = np.random.randint(self.width), np.random.randint(self.height)
+                x, y = self.rng.randint(self.width), np.random.randint(self.height)
                 if self.map_array[x, y] == 0:
                     return np.array([x, y])
 

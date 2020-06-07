@@ -365,6 +365,8 @@ class GridWorldEnv(gym.Env):
                 self.obs_high += list(np.ones((pob_size, pob_size)).flatten())
             elif obs == 'dist_sensors':
                 n_sensors = self.observations[obs]['n_sensors']
+                if self.observations[obs]['colour_func'] is not None:
+                    n_sensors *= 4  # R, G, B, Distance
                 normalize = self.observations[obs]['normalize']
                 if normalize:
                     max_dist = 1
@@ -505,12 +507,14 @@ class GridWorldEnv(gym.Env):
                 fov_rad = self.observations[obs]['fov_rad']
                 max_dist = self.observations[obs]['max_dist']
                 normalize = self.observations[obs]['normalize']
+                colour_func = self.observations[obs]['colour_func']
                 sensors = self.get_dist_sensor_readings(
                     state=self.state,
                     n_sensors=n_sensors,
                     fov_rad=fov_rad,
                     max_dist=max_dist,
                     normalize=normalize,
+                    colour_func=colour_func,
                 )
                 if return_dict:
                     obs_dict[obs] = sensors
@@ -968,7 +972,7 @@ class GridWorldEnv(gym.Env):
 
         return ret
 
-    def get_dist_sensor_readings(self, state, n_sensors, fov_rad, max_dist, normalize):
+    def get_dist_sensor_readings(self, state, n_sensors, fov_rad, max_dist, normalize, colour_func):
         """
         Returns distance sensor readings from a given state
         """
@@ -984,13 +988,17 @@ class GridWorldEnv(gym.Env):
             # y=state[1]+.5,
             th=state[2],
             max_sensor_dist=max_dist,
+            colour_func=colour_func,
             debug_value=0,
         )
 
         if normalize:
-            sensors /= max_dist
+            if colour_func is None:
+                sensors /= max_dist
+            else:
+                sensors[:, 0] /= max_dist
 
-        return sensors
+        return sensors.flatten()
 
     def random_free_space(self, continuous=False):
         """
@@ -1201,11 +1209,14 @@ class GridWorldEnv(gym.Env):
             normalize = self.observations['dist_sensors']['normalize']
             max_dist = self.observations['dist_sensors']['max_dist']
             dists = self.obs[self.obs_index_dict['dist_sensors']]
+            if self.observations['dist_sensors']['colour_func'] is not None:
+                dists = dists[3::4]
             if normalize:
                 dists *= max_dist
             ang_interval = np.pi / len(dists)
             start_ang = -fov_rad / 2. + self.state[2]
             angs = np.linspace(-fov_rad / 2. + self.state[2], fov_rad / 2. + self.state[2], n_sensors)
+
             for i, line in enumerate(self.dist_sensor_lines):
                 # x = self._scale_x_pos(self.state[0] + dists[i] * np.cos(start_ang + i * ang_interval))
                 # y = self._scale_y_pos(self.state[1] + dists[i] * np.sin(start_ang + i * ang_interval))
@@ -1517,11 +1528,17 @@ def generate_obs_dict(params):
         max_sensor_dist = params['max_sensor_dist']
         normalize_sensors = params['normalize_dist_sensors']
         fov_rad = params['fov'] * np.pi / 180
+        # optional colour with distance sensors
+        if 'colour_func' in params:
+            colour_func = params['colour_func']
+        else:
+            colour_func = None
         obs['dist_sensors'] = {
             'n_sensors': params['n_sensors'],
             'fov_rad': fov_rad,
             'max_dist': max_sensor_dist,
             'normalize': normalize_sensors,
+            'colour_func': colour_func,
         }
     if params['n_grid_cells'] > 0:
         obs['grid_cell'] = {

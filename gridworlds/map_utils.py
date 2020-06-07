@@ -211,6 +211,7 @@ def generate_sensor_readings(map_arr,
                              y=0,
                              th=0,
                              max_sensor_dist=10,
+                             colour_func=None,
                              debug_value=0,  # For debugging the function interactively
                              ):
     """
@@ -219,14 +220,17 @@ def generate_sensor_readings(map_arr,
     uses supersampling to find the approximate collision points
     """
     # arr_zoom = scipy.ndimage.zoom(map_arr, zoom_level, order=0)
-    dists = np.zeros((n_sensors,))
+    if colour_func is None:
+        dists = np.zeros((n_sensors, 1))
+    else:
+        dists = np.zeros((n_sensors, 4))
 
     angs = np.linspace(-fov_rad / 2. + th, fov_rad / 2. + th, n_sensors)
 
     for i, ang in enumerate(angs):
         # dists[i] = get_collision_coord(arr_zoom, x * zoom_level, y * zoom_level, ang, max_sensor_dist * zoom_level,
         #                                debug_value=debug_value) / zoom_level
-        dists[i] = get_collision_coord(map_arr, x, y, ang, max_sensor_dist)
+        dists[i, :] = get_collision_coord(map_arr, x, y, ang, max_sensor_dist, colour_func)
 
     return dists
 
@@ -285,6 +289,7 @@ def get_collision_coord_old(map_array, x, y, th,
 
 def get_collision_coord(map_array, x, y, th,
                         max_sensor_dist=10,
+                        colour_func=None,
                         debug_value=2,
                         dr=.05,
                         ):
@@ -305,9 +310,20 @@ def get_collision_coord(map_array, x, y, th,
         cy += dy
 
         if map_array[int(round(cx)), int(round(cy))] == 1:
-            return (i - 1)*dr
+            if colour_func is None:
+                return (i - 1)*dr
+            else:
+                ret = np.zeros((4,))
+                ret[:3] = colour_func(cx, cy)
+                ret[3] = (i - 1) * dr
+                return ret
 
-    return max_sensor_dist
+    if colour_func is None:
+        return max_sensor_dist
+    else:
+        ret = np.zeros((4,))
+        ret[3] = max_sensor_dist
+        return ret
 
 
 def test_map_scan():

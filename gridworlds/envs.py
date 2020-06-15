@@ -814,8 +814,8 @@ class GridWorldEnv(gym.Env):
             if self.free_space(new_pos):
                 self.state[[0, 1]] = new_pos
             else:
-                # TODO: move as close as possible to the wall
-                return
+                # move as close as possible to the wall and possibly drag along it
+                self.state[[0, 1]] = self.colliding_movement(displacement)
         else:
             if self.movement_type == 'directional':
 
@@ -839,6 +839,20 @@ class GridWorldEnv(gym.Env):
                 self.state[[0, 1]] = new_pos
             else:
                 return
+
+    def colliding_movement(self, displacement, n_steps=10):
+        """ Make small steps in the x and y direction """
+
+        current_loc = self.state[[0, 1]]
+        dx = displacement[0] / n_steps
+        dy = displacement[1] / n_steps
+        for step in range(1, n_steps + 1):
+            if self.free_space(current_loc + np.array([dx, 0])):
+                current_loc += np.array([dx, 0])
+            if self.free_space(current_loc + np.array([0, dy])):
+                current_loc += np.array([0, dy])
+
+        return current_loc
 
     def _reset_agent(self):
         # Choose a random starting location
